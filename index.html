@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Article Maker</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f1f1f1; padding: 20px; }
+    form { background: #fff; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
+    input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 10px 15px; border: none; border-radius: 6px; background: #007bff; color: #fff; cursor: pointer;}
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>✍️ Submit New Article</h1>
+  <form id="articleForm">
+    <input type="text" name="author" placeholder="Author Name" required>
+    <input type="text" name="course" placeholder="Course" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="title" placeholder="Article Title" required>
+    <textarea name="content" placeholder="Write your article here..." rows="6" required></textarea>
+    <button type="submit">Send to Telegram</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    const BOT_TOKEN = "8384873421:AAFSWTNbwmwhXAV1m37y1TZZsA_i-_SDV3g";
+    const USER_ID = "7789224631";
+
+    document.getElementById("articleForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      let formData = new FormData(this);
+      let article = {};
+      formData.forEach((v, k) => article[k] = v);
+
+      // Create JSON file blob
+      let blob = new Blob([JSON.stringify(article, null, 2)], { type: "application/json" });
+      let file = new File([blob], article.title.replace(/\s+/g,"_") + ".json");
+
+      let status = document.getElementById("status");
+      status.innerText = "⏳ Sending...";
+
+      try {
+        let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`;
+        let fd = new FormData();
+        fd.append("chat_id", USER_ID);
+        fd.append("document", file);
+
+        let res = await fetch(url, { method: "POST", body: fd });
+        let data = await res.json();
+
+        if (data.ok) {
+          status.innerText = "✅ Article sent successfully!";
+          this.reset();
+        } else {
+          status.innerText = "⚠️ Failed to send: " + data.description;
+        }
+      } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Error sending to Telegram.";
+      }
+    });
+  </script>
+</body>
+</html>
